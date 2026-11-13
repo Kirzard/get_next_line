@@ -118,5 +118,3 @@ A linked list is suitable here because the number of descriptors being read can 
 ### AI usage
 
 AI assistance was used as a learning and debugging aid during this project. It helped explain the behavior of `read()`, dynamic memory allocation, pointers, and linked lists; discuss how to preserve independent reading states for multiple file descriptors; and identify possible issues in buffer management, node removal, and memory handling. AI was also used to help structure and write this README.
-
-AI-generated suggestions were treated as guidance, not as proof that the implementation was correct. The code must be reviewed, compiled, tested with different `BUFFER_SIZE` values, and checked for memory errors by the project author.
