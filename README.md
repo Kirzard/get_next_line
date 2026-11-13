@@ -19,35 +19,127 @@ The project includes:
 
 ### Compilation
 
-The project does not provide its own executable or `main()` function. To test it, create a `main.c` file and compile it together with the relevant source files.
+The project does not provide its own executable or `main()` function. The following example programs can be used to test the mandatory and bonus implementations. Keep them as local test files; they are not part of the files required by the 42 subject.
 
-Compile the mandatory part with:
+### Mandatory example: `main.c`
+
+This program opens one file and prints it one line at a time using `get_next_line()`.
+
+```c
+#include "get_next_line.h"
+#include <fcntl.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+
+int main(int argc, char **argv)
+{
+    int     fd;
+    char    *line;
+
+    if (argc != 2)
+    {
+        fprintf(stderr, "Usage: %s <file>\n", argv[0]);
+        return (1);
+    }
+    fd = open(argv[1], O_RDONLY);
+    if (fd < 0)
+    {
+        perror("open");
+        return (1);
+    }
+    while ((line = get_next_line(fd)) != NULL)
+    {
+        fputs(line, stdout);
+        free(line);
+    }
+    close(fd);
+    return (0);
+}
+```
+
+Compile and run it with:
 
 ```sh
 cc -Wall -Wextra -Werror -D BUFFER_SIZE=42 \
     main.c get_next_line.c get_next_line_utils.c -o gnl
+./gnl test.txt
 ```
 
-Compile the bonus part with:
+### Bonus example: `main_bonus.c`
+
+This program opens three files and alternates calls between their file descriptors. It demonstrates that each descriptor keeps its own reading state.
+
+```c
+#include "get_next_line_bonus.h"
+#include <fcntl.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+
+int main(int argc, char **argv)
+{
+    int     fds[3];
+    int     i;
+    int     active;
+    char    *line;
+
+    if (argc != 4)
+    {
+        fprintf(stderr, "Usage: %s <file1> <file2> <file3>\n", argv[0]);
+        return (1);
+    }
+    i = 0;
+    while (i < 3)
+    {
+        fds[i] = open(argv[i + 1], O_RDONLY);
+        if (fds[i] < 0)
+        {
+            perror(argv[i + 1]);
+            while (i > 0)
+                close(fds[--i]);
+            return (1);
+        }
+        i++;
+    }
+    active = 3;
+    while (active > 0)
+    {
+        i = 0;
+        while (i < 3)
+        {
+            if (fds[i] != -1)
+            {
+                line = get_next_line(fds[i]);
+                if (line == NULL)
+                {
+                    close(fds[i]);
+                    fds[i] = -1;
+                    active--;
+                }
+                else
+                {
+                    printf("FD%d: ", i + 1);
+                    fputs(line, stdout);
+                    free(line);
+                }
+            }
+            i++;
+        }
+    }
+    return (0);
+}
+```
+
+Compile and run it with:
 
 ```sh
 cc -Wall -Wextra -Werror -D BUFFER_SIZE=42 \
-    main.c get_next_line_bonus.c get_next_line_utils_bonus.c -o gnl_bonus
+    main_bonus.c get_next_line_bonus.c get_next_line_utils_bonus.c -o gnl_bonus
+./gnl_bonus test1.txt test2.txt test3.txt
 ```
 
-These examples assume that `BUFFER_SIZE` is guarded in the header so it can be overridden by the compiler. Otherwise, set `BUFFER_SIZE` in the appropriate header before compiling. You can replace `42` with another positive value to test different read sizes.
-
-Run the corresponding test executable with:
-
-```sh
-./gnl
-```
-
-or:
-
-```sh
-./gnl_bonus
-```
+These commands assume that `BUFFER_SIZE` is guarded in the relevant header so it can be overridden by the compiler. Otherwise, set `BUFFER_SIZE` in the header before compiling. You can replace `42` with another positive value to test different read sizes.
 
 Do not compile the mandatory and bonus implementations into the same executable: both provide a function named `get_next_line()`.
 
@@ -69,7 +161,7 @@ get_next_line_bonus.h
 get_next_line_utils_bonus.c
 ```
 
-A test `main.c` can be created locally to check the implementation. It is not one of the required project source files.
+The example files `main.c` and `main_bonus.c` are local test programs only. Do not include them in the submitted project files.
 
 ## Algorithm and technical choices
 
